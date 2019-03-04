@@ -1,0 +1,2 @@
+Start mongodb before use:
+    mongod --dbpath ## path to this project directory ##/mongodb/mongo --ipv6

@@ -1,0 +1,15 @@
+New version of Bbox LabelTool for dataset image annotation with mongodb connectivity.
+
+Specify the parameters in run.py to use.
+Directory structure should look like this:
+Top directory:
+---- subdir 1 (ex: Ford)
+    ---- images for the brand of the subdirectory they are in
+---- subdir 2 (ex: Chevy)
+---- subdir n
+
+To create hotkeys for all of your brands, use key_bindings.json.
+# Several keys have already been taken for dataset navigation:
+    # 3 and 4 to cycle backward and forward thru your images respectively
+    # 2 to save annotations to the mongodb
+    # space to send an image to the "skip" subdir under the given top directory
