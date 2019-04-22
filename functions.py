@@ -4,10 +4,13 @@ from PIL import Image, ImageTk
 
 
 class FunctionController:
-    def __init__(self):
-        self.db = MongoClient().deep_learning
+    def __init__(self, top):
+        client = MongoClient()
+        self.db = client.deep_learning
+        self.skipdir = os.path.join(top, "skipped")
 
         self.im_paths = []
+        self.im_path = ""
         self.im_name = ""
         self.im_idx = -1
         self.total = 0
@@ -33,11 +36,13 @@ class FunctionController:
         if self.total == 0:
             print("[INFO] Directory is empty!")
 
+        return self.total
+
     def load_image(self):
-        im_path = self.im_paths[self.im_idx]
-        self.im_name = os.path.basename(im_path)
+        self.im_path = self.im_paths[self.im_idx]
+        self.im_name = os.path.basename(self.im_path)
         try:
-            image = Image.open(im_path)
+            image = Image.open(self.im_path)
         except:
             print("[INFO] Could not open selected image!")
             return None, None, "repeat"
@@ -50,7 +55,7 @@ class FunctionController:
         tkimg = ImageTk.PhotoImage(image)
 
         prev_bboxes = self.gather_previms()
-        return tkimg, prev_bboxes, [self.im_idx, self.total]
+        return tkimg, prev_bboxes, [self.im_idx + 1, self.total]
 
     def save_image(self, annotations):
         self.purge_old_entries()
@@ -71,7 +76,10 @@ class FunctionController:
             print("[INFO] Database entry: ")
             print("         " + str(final_data))
 
-    def next_image(self):
+    def next_image(self, idx=0):
+        if idx is not 0:
+            print("idx: " + str(idx))
+            self.im_idx = idx - 2
         if self.im_idx + 1 == self.total:
             print("[INFO] At end of image pool!")
             return None, None, "end"
@@ -81,14 +89,25 @@ class FunctionController:
 
     def prev_image(self, event=None):
         if self.im_idx == 0:
-            print("[INFO] Alreday at beginning of image pool!")
+            print("[INFO] Already at beginning of image pool!")
             return
         self.im_idx -= 1
         t, b, a = self.load_image()
         return t, b, a
 
-    def move_skipim(self, event=None):
-        print()
+    def skip_im(self):
+        print("moving image: " + self.im_name)
+        if not os.path.exists(self.skipdir):
+            os.mkdir(self.skipdir)
+
+        skip_path = os.path.join(self.skipdir, os.path.basename(self.im_name))
+        os.rename(self.im_path, skip_path)
+
+        self.total -= 1
+        self.im_idx -= 1
+        for path in self.im_paths:
+            if path == self.im_path:
+                self.im_paths.remove(path)
 
     def search_immum(self, idx):
         if 1 <= idx <= self.total:
