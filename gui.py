@@ -3,7 +3,9 @@ from tkinter import *
 import json
 import string
 import argparse
-from v5.functions import FunctionController
+import os
+from functions import FunctionController
+from convert import Converter
 
 ap = argparse.ArgumentParser()
 ap.add_argument("-d", "--dir", required=True, help="top pull directory")
@@ -38,6 +40,7 @@ class GuiController:
         self.tkvars = []
         self.opt_menues = []
         self.err_menues = []
+        self.err_frame = None
         self.err_msg = None
         self.disp = None
 
@@ -53,6 +56,7 @@ class GuiController:
         self.color_status = 0
         self.brand_options = []
         self.default = "Choose:"
+        self.in_path = ""
 
         self.construct_gui(parent)
         self.bind_keys(parent)
@@ -76,10 +80,13 @@ class GuiController:
         self.listframe.grid(row=2, column=2, sticky=N, padx=7)
         self.listframe.config(highlightbackground='black', highlightthickness=2)
 
-        # interfering with listbox frames
         del_btn = Button(self.frame, text="Delete BBox", padx=7, pady=5, command=self.delete_bbox)
         del_btn.grid_propagate(False)
         del_btn.grid(row=3, column=2, sticky=E+W)
+
+        convert_btn = Button(self.frame, text="Convert", padx=7, pady=5, command=self.convert)
+        convert_btn.grid_propagate(False)
+        convert_btn.grid(row=4, column=2, sticky=E+W+N)
 
         ctr_panel = Frame(self.frame)
         ctr_panel.grid(row=5, column=1, columnspan=2, sticky=W+E)
@@ -362,7 +369,7 @@ class GuiController:
     def err_missingcats(self, c):
         self.err_msg = Message(self.frame, text="**Please specify a db collection for the bbox(es)**", width=170)
         self.err_msg.config(fg='red', justify="center")
-        self.err_msg.grid(row=3, column=2, sticky=N + E + W)
+        self.err_msg.grid(row=5, column=2, sticky=N + E + W)
         for i in c:
             err_menu = self.opt_menues[i]
             err_menu.config(bg='red', highlightthickness=3.9)
@@ -373,7 +380,7 @@ class GuiController:
     #########################################
     def load_dir(self, event=None):
         self.brand_options = self.fc.get_brandoptions()
-        self.total = self.fc.load_dir(args["dir"], args["brand"])
+        self.total, self.in_path = self.fc.load_dir(args["dir"], args["brand"])
         self.next_image()
 
     def save_image(self, event=None):
@@ -410,6 +417,19 @@ class GuiController:
         idx = int(self.nav_idx.get())
         if 1 <= idx <= self.total:
             self.next_image(idx=idx)'''
+
+    ###########################################################
+    # Convert this script's coordinate outputs to YOLO format #
+    ###########################################################
+
+    def convert(self, event=None):
+        if self.in_path == "":
+            print("[INFO] No images have been loaded yet!")
+            print()
+        else:
+            outpath = os.path.join(args["dir"], "converted")
+            converter = Converter(self.in_path, outpath)
+            converter.convert()
 
 
 if __name__ == '__main__':

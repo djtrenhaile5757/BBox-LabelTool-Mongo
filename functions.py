@@ -36,7 +36,7 @@ class FunctionController:
         if self.total == 0:
             print("[INFO] Directory is empty!")
 
-        return self.total
+        return self.total, s
 
     def load_image(self):
         self.im_path = self.im_paths[self.im_idx]
