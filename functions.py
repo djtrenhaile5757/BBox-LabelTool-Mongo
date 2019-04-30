@@ -120,7 +120,7 @@ class FunctionController:
             data = self.db[coll].find_one({"name": self.im_name})
             if data is not None:
                 entry = [data, coll]
-                matching_ims.insert(0, entry)   # counteracts the 'reverse searching' of mongo
+                matching_ims.insert(0, entry)   # counteracts the 'reverse searching' of cars
 
         for match in matching_ims:
             data = match[0]

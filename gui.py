@@ -9,7 +9,7 @@ from convert import Converter
 
 ap = argparse.ArgumentParser()
 ap.add_argument("-d", "--dir", required=True, help="top pull directory")
-ap.add_argument("-b", "--brand", required=True, help="the car brand you wish to analyze; corresponds to a subdir of -d")
+ap.add_argument("-b", "--cat", required=True, help="the car brand you wish to analyze; corresponds to a subdir of -d")
 ap.add_argument("-k", "--keys", required=True, help="path to json key bindings for categories")
 args = vars(ap.parse_args())
 
@@ -52,8 +52,7 @@ class GuiController:
         self.bbox_id = None
 
         self.COLORS = ['red', 'blue', 'yellow', 'pink', 'cyan', 'green', 'black']
-        self.USED_COLORS = []
-        self.color_status = 0
+        self.color_idx = 0
         self.brand_options = []
         self.default = "Choose:"
         self.in_path = ""
@@ -118,7 +117,7 @@ class GuiController:
         p.bind("<space>", self.skip_im)
         p.bind("<Up>", self.select_prev)
         p.bind("<Down>", self.select_next)
-        
+
         with open(args["keys"]) as k:
             data = json.load(k)
         for l in list(string.ascii_lowercase):
@@ -148,7 +147,6 @@ class GuiController:
             self.bbox_list.append(bbox_entry)
             self.bbox_idlist.append(self.bbox_id)
             self.bbox_id = None
-            self.color_status = 0
 
             # pass x1 to verify bboxes
             self.append_bboxes(self.default, "new box")
@@ -170,7 +168,7 @@ class GuiController:
             self.bbox_id = self.main_panel.create_rectangle(self.STATE['x'], self.STATE['y'],
                                                           event.x, event.y,
                                                           width=2,
-                                                          outline=self.get_color())
+                                                          outline=self.COLORS[self.color_idx % len(self.COLORS)])
         
     def cancel_bbox(self, event=None):
         print("canceling")
@@ -212,8 +210,9 @@ class GuiController:
         while i < len(bboxes):
             bbox = bboxes[i]
             b = (bbox["left x"], bbox["top y"], bbox["right x"], bbox["bottom y"])
+            print("change image get color")
             id = self.main_panel.create_rectangle(b[0], b[1], b[2], b[3], width=2,
-                                                  outline=self.get_color(True))
+                                                  outline=self.COLORS[self.color_idx % len(self.COLORS)])
             # self.bboxIdList
             self.bbox_list.append(tuple(b))
             self.bbox_idlist.append(id)
@@ -233,8 +232,9 @@ class GuiController:
 
         text = str(temp)
         # text = "bbox " + str(self.listframe_rows)
+        print("color_idx: " + str(self.color_idx))
         new_cat_label = Label(cat_frame, text=text,
-                              fg=self.get_color())
+                              fg=self.COLORS[self.color_idx % len(self.COLORS)])
         new_cat_label.grid(row=1, column=1, sticky=W)
 
         tkvar = StringVar(cat_frame)
@@ -246,14 +246,11 @@ class GuiController:
         self.cat_frames.append(cat_frame)
         self.tkvars.append(tkvar)
         self.opt_menues.append(menu)
+        print("     plus 1")
+        self.color_idx += 1
 
         if len(self.cat_frames) == 1:
             self.select_frame(0)
-
-        '''print("frames: ")
-        for frame in self.cat_frames:
-            print(frame)
-        print()'''
 
     def select_frame(self, index):
         l = len(self.cat_frames)
@@ -300,8 +297,7 @@ class GuiController:
         self.tkvars = []
         self.bbox_list = []
         self.bbox_idlist = []
-        self.USED_COLORS = []
-        self.color_status = 0
+        self.color_idx = 0
 
         if self.err_msg is not None:
             self.err_msg.destroy()
@@ -345,7 +341,7 @@ class GuiController:
             print("[INFO] No bounding boxes; image was not saved")
             return False
 
-    def get_color(self, changing_image=False):
+    '''def get_color(self, changing_image=False):
         idx = 0
         if len(self.USED_COLORS) > 0:
             for u_c in self.USED_COLORS:
@@ -354,10 +350,11 @@ class GuiController:
                         idx += 1
 
         color = self.COLORS[idx % len(self.COLORS)]
-        if self.color_status == 0 and not changing_image:
+        if len(self.bbox_list) > idx and not changing_image:
             self.USED_COLORS.append(color)
-            self.color_status = 1
-        return color
+        print("     color: " + str(color))
+        print("     bbox length: " + str(len(self.bbox_list)))
+        return color'''
 
     def delete_frames(self, idx=-1):
         if idx > -1:
@@ -380,7 +377,7 @@ class GuiController:
     #########################################
     def load_dir(self, event=None):
         self.brand_options = self.fc.get_brandoptions()
-        self.total, self.in_path = self.fc.load_dir(args["dir"], args["brand"])
+        self.total, self.in_path = self.fc.load_dir(args["dir"], args["cat"])
         self.next_image()
 
     def save_image(self, event=None):
@@ -428,7 +425,7 @@ class GuiController:
             print()
         else:
             outpath = os.path.join(args["dir"], "converted")
-            converter = Converter(self.in_path, outpath)
+            converter = Converter(self.in_path, outpath, 10)
             converter.convert()
 
 

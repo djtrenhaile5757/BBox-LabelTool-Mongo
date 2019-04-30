@@ -12,9 +12,10 @@ from pymongo import MongoClient
 ##################
 
 class Converter:
-    def __init__(self, in_path, out_path):
+    def __init__(self, in_path, out_path, perc):
         self.in_path = in_path
         self.out_path = out_path
+        self.perc_test = perc
 
     @staticmethod
     def calc(size, box):
@@ -45,6 +46,7 @@ class Converter:
 
         idx = 1
         file_idx = 1
+        # file_percent = 1
         for c in db.collection_names():
             print("coll " + str(idx) + ": " + str(c))
             coll = db[c]
@@ -60,6 +62,7 @@ class Converter:
                         ymax = entry[str(sub)]["bottom y"]
 
                         im_path = os.path.join(self.in_path, im_name)
+                        print("im_path: " + im_path)
                         try:
                             im = Image.open(im_path)
 
@@ -67,17 +70,18 @@ class Converter:
                             h = int(im.size[1])
                             b = (float(xmin), float(xmax), float(ymin), float(ymax))
                             bb = self.calc((w, h), b)
-
                             cat = self.get_catnum(c)
-
                             out = self.out_path + "/" + c + "/"
                             shutil.copyfile(im_path, out + im_name)
                             name, ext = os.path.splitext(im_name)
-
                             file = open(out + name + ".txt", "w")
-                            file.write(str(cat) + " " + " ".join([str(a) for a in bb]) + "\n")
+                            file.write(str(0) + " " + " ".join([str(a) for a in bb]) + "\n")
                             print("File " + str(file_idx).zfill(5) + ": " + im_name)
+                            '''if file_percent == self.perc_test:
+                                file_percent = 1
+                                file.write()'''
                             file_idx += 1
+
                         except FileNotFoundError:
                             print("[INFO] One of the files listed in the db could not be found"
                                   "     in the given directory! Skipping...")
